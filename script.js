@@ -1,4 +1,3 @@
-// Selecting all required elements
 const wrapper = document.querySelector(".wrapper"),
 toast = wrapper.querySelector(".toast"),
 title = toast.querySelector("span"),
@@ -6,43 +5,73 @@ subTitle = toast.querySelector("p"),
 wifiIcon = toast.querySelector(".icon"),
 closeIcon = toast.querySelector(".close-icon");
 
-window.onload = ()=>{
-    function ajax(){
-        let xhr = new XMLHttpRequest(); //creating new XML object
-        xhr.open("GET", "https://jsonplaceholder.typicode.com/posts", true); //sending get request on this URL
-        xhr.onload = ()=>{ //once ajax loaded
-            //if ajax status is equal to 200 or less than 300 that mean user is getting data from that provided url
-            //or his/her response status is 200 that means he/she is online
-            if(xhr.status == 200 && xhr.status < 300){
-                toast.classList.remove("offline");
-                title.innerText = "You're online now";
-                subTitle.innerText = "Hurray! Internet is connected.";
-                wifiIcon.innerHTML = '<i class="uil uil-wifi"></i>';
-                closeIcon.onclick = ()=>{ //hide toast notification on close icon click
-                    wrapper.classList.add("hide");
-                }
-                setTimeout(()=>{ //hide the toast notification automatically after 5 seconds
-                    wrapper.classList.add("hide");
-                }, 5000);
-            }else{
-                offline(); //calling offline function if ajax status is not equal to 200 or not less that 300
-            }
-        }
-        xhr.onerror = ()=>{
-            offline(); ////calling offline function if the passed url is not correct or returning 404 or other error
-        }
-        xhr.send(); //sending get request to the passed url
-    } 
-    
-    function offline(){ //function for offline
-        wrapper.classList.remove("hide");
-        toast.classList.add("offline");
-        title.innerText = "You're offline now";
-        subTitle.innerText = "Opps! Internet is disconnected.";
-        wifiIcon.innerHTML = '<i class="uil uil-wifi-slash"></i>';
-    }
+let isOnlineShown = false; // Flag to track if "You're online now" has been displayed
+let isOnline = navigator.onLine; // Get initial online state from browser
 
-    setInterval(()=>{ //this setInterval function call ajax frequently after 100ms
-        ajax();
-    }, 100);
-}
+window.onload = () => {
+  function ajax() {
+    let xhr = new XMLHttpRequest(); // Create a new XMLHttpRequest object
+    xhr.open("GET", "https://jsonplaceholder.typicode.com/posts", true); // Send a GET request
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) { // Check for successful response (2xx)
+        if (!isOnlineShown) { // Only show "You're online now" once
+          toast.classList.remove("offline");
+          title.innerText = "You're online now";
+          subTitle.innerText = "Hurray! Internet is connected.";
+          wifiIcon.innerHTML = '<i class="uil uil-wifi"></i>';
+          isOnlineShown = true; // Mark online message as shown
+        }
+      } else {
+        offline(); // Call offline function if request fails
+      }
+    };
+
+    xhr.onerror = () => {
+      offline(); // Call offline function on network error
+    };
+
+    xhr.send();
+  }
+
+  function offline() {
+    wrapper.classList.remove("hide");
+    toast.classList.add("offline");
+    title.innerText = "You're offline now";
+    subTitle.innerText = "Opps! Internet is disconnected.";
+    wifiIcon.innerHTML = '<i class="uil uil-wifi-slash"></i>';
+  }
+
+  // Event listener for online/offline events
+  window.addEventListener("online", () => {
+    isOnline = true;
+    ajax(); // Optionally perform XHR request when online
+    toast.classList.remove("offline");
+    title.innerText = "You're online now";
+    subTitle.innerText = "Hurray! Internet is connected.";
+    wifiIcon.innerHTML = '<i class="uil uil-wifi"></i>';
+  });
+
+  window.addEventListener("offline", () => {
+    isOnline = false;
+    offline(); // Call offline function
+  });
+
+  // Your existing code (ensure it doesn't interfere with online/offline logic)
+  // ... your code ...
+
+  // **Event listener for close icon (guaranteed to exist now)**
+  closeIcon.addEventListener("click", () => {
+    wrapper.classList.add("hide");
+  });
+
+  if (isOnline) {
+    ajax(); // Optionally perform XHR request on initial load if online
+  } else {
+    offline(); // Display offline message if initially offline
+  }
+};
+
+setInterval(() => {
+  // Update based on online/offline state (optional)
+}, 1000); // Check every second (adjust interval as needed)
